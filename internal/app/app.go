@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/savanyv/e-commerce-task-be/config"
 	"github.com/savanyv/e-commerce-task-be/internal/database"
+	"github.com/savanyv/e-commerce-task-be/internal/delivery/routes"
 )
 
 type Server struct {
@@ -28,6 +29,11 @@ func (s *Server) Run() error {
 	}
 
 	database.AutoMigrate()
+
+	if err := routes.InitRoutes(s.app); err != nil {
+		log.Fatal("Failed to initialize routes")
+		return err
+	}
 
 	if err := s.app.Listen(":" + s.config.PortServer); err != nil {
 		log.Fatal("Failed to start server")
