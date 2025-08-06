@@ -17,11 +17,13 @@ type ProductUsecase interface {
 
 type productUsecase struct {
 	repo repository.ProductRepository
+	variantRepo repository.VariantRepository
 }
 
-func NewProductUsecase(repo repository.ProductRepository) ProductUsecase {
+func NewProductUsecase(repo repository.ProductRepository, variantRepo repository.VariantRepository) ProductUsecase {
 	return &productUsecase{
 		repo: repo,
+		variantRepo: variantRepo,
 	}
 }
 
@@ -33,12 +35,28 @@ func (u *productUsecase) GetAllProducts() ([]*dtos.ProductResponse, error) {
 
 	var response []*dtos.ProductResponse
 	for _, product := range products {
+		variants, err := u.variantRepo.FindByProductID(product.ID)
+		if err != nil {
+			return nil, errors.New("failed to get variants")
+		}
+
+		var variantReponses []dtos.VariantResponse
+		for _, v := range variants {
+			variantReponses = append(variantReponses, dtos.VariantResponse{
+				ID: v.ID,
+				Name: v.Name,
+				Price: v.Price,
+				Stock: v.Stock,
+			})
+		}
+
 		response = append(response, &dtos.ProductResponse{
 			ID:        product.ID,
 			Name:      product.Name,
 			Type:      product.Type,
 			CategoryID: product.CategoryID,
 			BrandID:   product.BrandID,
+			Variants:  variantReponses,
 		})
 	}
 
@@ -51,12 +69,28 @@ func (u *productUsecase) GetProductByID(id int) (*dtos.ProductResponse, error) {
 		return nil, errors.New("failed to get product")
 	}
 
+	variantModels, err := u.variantRepo.FindByProductID(product.ID)
+	if err != nil {
+		return nil, errors.New("failed to get variants")
+	}
+
+	var variantResponses []dtos.VariantResponse
+	for _, v := range variantModels {
+		variantResponses = append(variantResponses, dtos.VariantResponse{
+			ID: v.ID,
+			Name: v.Name,
+			Price: v.Price,
+			Stock: v.Stock,
+		})
+	}
+
 	response := &dtos.ProductResponse{
 		ID:        product.ID,
 		Name:      product.Name,
 		Type:      product.Type,
 		CategoryID: product.CategoryID,
 		BrandID:   product.BrandID,
+		Variants:  variantResponses,
 	}
 
 	return response, nil
@@ -86,13 +120,37 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 		return nil, errors.New("failed to create product")
 	}
 
+	var variantResponses []dtos.VariantResponse
+	if req.Type == "variant" && len(req.Variants) > 0 {
+		var variants []*models.Variant
+		for _, v := range req.Variants {
+			variants = append(variants, &models.Variant{
+				Name:  v.Name,
+				Price: v.Price,
+				Stock: v.Stock,
+			})
+		}
+
+		if err := u.variantRepo.CreateBulk(product.ID, variants); err != nil {
+			return nil, errors.New("failed to create variants")
+		}
+
+		for _, v := range variants {
+			variantResponses = append(variantResponses, dtos.VariantResponse{
+				Name:  v.Name,
+				Price: v.Price,
+				Stock: v.Stock,
+			})
+		}
+	}
+
 	response := &dtos.ProductResponse{
 		ID:        product.ID,
 		Name:      product.Name,
 		Type:      product.Type,
 		CategoryID: product.CategoryID,
 		BrandID:   product.BrandID,
-		Variants:  []dtos.VariantResponse{},
+		Variants:  variantResponses,
 	}
 
 	return response, nil

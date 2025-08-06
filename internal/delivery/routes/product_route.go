@@ -10,7 +10,8 @@ import (
 
 func productRoutes(app fiber.Router) {
 	repo := repository.NewProductRepository(database.DB)
-	usecase := usecase.NewProductUsecase(repo)
+	variantRepo := repository.NewVariantRepository(database.DB)
+	usecase := usecase.NewProductUsecase(repo, variantRepo)
 	handler := handlers.NewProductHandler(usecase)
 
 	app.Get("/products", handler.GetAll)
