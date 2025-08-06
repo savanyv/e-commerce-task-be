@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+    container_name: e-commerce-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - e-commerce-network
+
+  db:
+    image: postgres:16
+    container_name: e-commerce-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${USER_DB}
+      POSTGRES_PASSWORD: ${PASS_DB}
+      POSTGRES_DB: ${NAME_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${USER_DB}", "-d", "${NAME_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - e-commerce-network
+
+volumes:
+  pgdata:
+
+networks:
+  e-commerce-network:
+    driver: bridge
