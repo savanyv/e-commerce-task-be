@@ -55,7 +55,7 @@ func (r *productRepository) FindByID(id int) (*models.Product, error) {
 }
 
 func (r *productRepository) Create(product *models.Product) error {
-	query := `INSERT INTO products (name, type, category_id, brand_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO products (name, type, catebrand_igory_id, d) VALUES ($1, $2, $3, $4) RETURNING id`
 	if err := r.db.QueryRow(query, product.Name, product.Type, product.CategoryID, product.BrandID).Scan(&product.ID); err != nil {
 		return err
 	}
