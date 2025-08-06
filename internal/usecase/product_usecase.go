@@ -110,10 +110,10 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 	}
 
 	product := &models.Product{
-		Name:      req.Name,
-		Type:      req.Type,
+		Name:       req.Name,
+		Type:       req.Type,
 		CategoryID: req.CategoryID,
-		BrandID:   req.BrandID,
+		BrandID:    req.BrandID,
 	}
 
 	if err := u.repo.Create(product); err != nil {
@@ -121,13 +121,14 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 	}
 
 	var variantResponses []dtos.VariantResponse
-	if req.Type == "variant" && len(req.Variants) > 0 {
+	if len(req.Variants) > 0 {
 		var variants []*models.Variant
 		for _, v := range req.Variants {
 			variants = append(variants, &models.Variant{
-				Name:  v.Name,
-				Price: v.Price,
-				Stock: v.Stock,
+				ProductID: product.ID,
+				Name:      v.Name,
+				Price:     v.Price,
+				Stock:     v.Stock,
 			})
 		}
 
@@ -137,6 +138,7 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 
 		for _, v := range variants {
 			variantResponses = append(variantResponses, dtos.VariantResponse{
+				ID:    v.ID,
 				Name:  v.Name,
 				Price: v.Price,
 				Stock: v.Stock,
@@ -145,13 +147,14 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 	}
 
 	response := &dtos.ProductResponse{
-		ID:        product.ID,
-		Name:      product.Name,
-		Type:      product.Type,
+		ID:         product.ID,
+		Name:       product.Name,
+		Type:       product.Type,
 		CategoryID: product.CategoryID,
-		BrandID:   product.BrandID,
-		Variants:  variantResponses,
+		BrandID:    product.BrandID,
+		Variants:   variantResponses,
 	}
 
 	return response, nil
 }
+

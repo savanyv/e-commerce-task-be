@@ -9,6 +9,7 @@ import (
 type VariantRepository interface {
 	CreateBulk(productID int, variants []*models.Variant) error
 	FindByProductID(productID int) ([]*models.Variant, error)
+	FindByID(ID int) (*models.Variant, error)
 }
 
 type variantRepository struct {
@@ -21,15 +22,15 @@ func NewVariantRepository(db *sql.DB) VariantRepository {
 	}
 }
 
-func (r *variantRepository) CreateBulk(productID int, variatns []*models.Variant) error {
-	query := `INSERT INTO product_variants (product_id, name, price, stock) VALUES ($1, $2, $3, $4)`
-	for _, v := range variatns {
-		_, err := r.db.Exec(query, productID, v.Name, v.Price, v.Stock)
-		if err != nil {
+func (r *variantRepository) CreateBulk(productID int, variants []*models.Variant) error {
+	for _, v := range variants {
+		query := `INSERT INTO product_variants (product_id, name, price, strock) VALUES ($1, $2, $3, $4) RETURNING id`
+		if err := r.db.QueryRow(query, productID, v.Name, v.Price, v.Stock).Scan(&v.ID); err != nil {
 			return err
 		}
+		v.ProductID = productID
 	}
-
+	
 	return nil
 }
 
@@ -51,4 +52,13 @@ func (r *variantRepository) FindByProductID(productID int) ([]*models.Variant, e
 	}
 
 	return variants, nil
+}
+
+func (r *variantRepository) FindByID(ID int) (*models.Variant, error) {
+	query := `SELECT id, product_id, name, price, stock FROM product_variants WHERE id = $1`
+	var v models.Variant
+	if err := r.db.QueryRow(query, ID).Scan(&v.ID, &v.ProductID, &v.Name, &v.Price, &v.Stock); err != nil {
+		return nil, err
+	}
+	return &v, nil
 }

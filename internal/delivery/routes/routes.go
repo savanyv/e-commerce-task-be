@@ -9,6 +9,7 @@ func InitRoutes(app *fiber.App) error {
 	productRoutes(api)
 	brandRoutes(api)
 	categoryRoutes(api)
+	orderRoutes(api)
 
 	return nil
 }
