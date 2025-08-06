@@ -6,6 +6,7 @@ func InitRoutes(app *fiber.App) error {
 	api := app.Group("/api")
 
 	userRoutes(api)
+	productRoutes(api)
 
 	return nil
 }
